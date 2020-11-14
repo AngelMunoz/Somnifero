@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>@ViewData["Title"] | Somnifero</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.5.9/dist/css/uikit.min.css" />
+  <link rel="stylesheet" type="text/css" href="/main.css">
+  @RenderSection("HeadExtras", required: false)
+</head>
+
+<body>  
+  <article>
+    @RenderSection("Header", required: false)
+    @RenderBody()
+    @RenderSection("Footer", required: false)
+  </article>
+  <script src='https://unpkg.com/aurelia-script@1.5.2'></script>
+  <script src="https://cdn.jsdelivr.net/npm/uikit@3.5.9/dist/js/uikit.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/uikit@3.5.9/dist/js/uikit-icons.min.js"></script>
+  @RenderSection("Scripts", required: false)
+</body>
+
+</html>

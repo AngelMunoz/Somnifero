@@ -1,0 +1,11 @@
+@using Microsoft.FSharp.Core
+@model Somnifero.Models.FooterData
+
+<footer>
+    @if (OptionModule.IsNone(@Model.extraData))
+    {
+        <span>Yup, it's None</span>
+    } else {
+        <span>Nope, it's Some</span>
+    }
+</footer>

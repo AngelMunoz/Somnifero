@@ -1,0 +1,84 @@
+@using Somnifero.Models;
+
+@{
+    Layout = "_Layout";
+    var headerData = @ViewData["HeaderData"] as HeaderData;
+    var footerData = @ViewData["FooterData"] as FooterData;
+}
+@section Header {
+  @await Html.PartialAsync("_Header", headerData)
+}
+<main>
+  <ul class="uk-subnav uk-subnav-pill" uk-switcher>
+    <li><a href="#">Welcome Back</a></li>
+    <li><a href="#">Register</a></li>
+  </ul>
+
+  <ul class="uk-switcher uk-margin">
+    <li>
+      <section class="loginsection">
+        <form name="loginform" submit.trigger="submit()">
+          <fieldset class="uk-fieldset">
+            <legend class="uk-legend">Welcome</legend>
+            <div class="uk-margin">
+              <label for="email">Email:</label>
+              <input class="uk-input" type="email" name="email" value.bind="email" />
+            </div>
+            <div class="uk-margin">
+              <label for="password">Password:</label>
+              <input class="uk-input" type="password" name="password" value.bind="password" />
+            </div>
+            <div class="uk-margin">
+              <label>&nbsp;</label>
+              <input class="uk-input" type="submit" value="Submit" />
+            </div>
+          </fieldset>
+        </form>
+      </section>
+    </li>
+    <li>
+      <section class="signupsection">
+        <form name="submitform" submit.trigger="submit()">
+          <fieldset class="uk-fieldset">
+            <legend class="uk-legend">Personal Info</legend>
+            <div class="uk-margin">
+              <label for="name">Name:</label>
+              <input class="uk-input" type="text" name="name" required value.bind="name" />
+            </div>
+            <div class="uk-margin">
+              <label for="lastName">Password:</label>
+              <input class="uk-input" type="text" name="lastName" required value.bind="lastName" />
+            </div>
+          </fieldset>
+          <fieldset class="uk-fieldset">
+            <legend class="uk-legend">Credentials: </legend>
+            <div class="uk-margin">
+              <label for="email">Email:</label>
+              <input class="uk-input" type="email" name="email" keyup.delegate="checkExists() & debounce:750" value.bind="email" />
+            </div>
+            <div class="uk-margin">
+              <label for="password">Password:</label>
+              <input class="uk-input" type="password" name="password" keyup.delegate="checkPassword()" value.bind="password" />
+            </div>
+            <div class="uk-margin">
+              <label for="repeatPassword">Repeat Password:</label>
+              <input class="uk-input" type="password" name="repeatPassword" keyup.delegate="checkPassword()" value.bind="repeatPassword" />
+            </div>
+            <div class="uk-margin">
+              <label>&nbsp;</label>
+              <input class="uk-input" type="submit" value="Submit" disabled.bind="!isValidPassword || emailExists" />
+            </div>
+          </fieldset>
+        </form>
+      </section>
+    </li>
+  </ul>
+</main>
+
+@section Scripts {
+<script src="/js/index.js" type="module"></script>
+}
+
+@section Footer {
+  @await Html.PartialAsync("_Footer", footerData)
+}
