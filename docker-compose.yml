@@ -1,0 +1,25 @@
+version: "3"
+services:
+  api:
+    build:
+      context: .
+      dockerfile: dockerfile.dev
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:5000
+    volumes:
+      - .:/app
+    ports:
+      - 5000:5000
+    depends_on:
+      - mongodb
+  mongodb:
+    image: mongo:4
+    container_name: mongodb
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodata:/data/db
+volumes:
+  mongodata:
+    driver: local

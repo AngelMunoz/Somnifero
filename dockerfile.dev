@@ -1,0 +1,14 @@
+FROM mcr.microsoft.com/dotnet/sdk:5.0-alpine
+WORKDIR /remote_debugger/vsdbg
+
+RUN curl -sSL https://aka.ms/getvsdbgsh | sh /dev/stdin -v latest -l .
+
+WORKDIR /app
+
+# Copy csproj and restore as distinct layers
+COPY *.fsproj ./
+RUN dotnet restore
+# Copy everything else and build
+COPY . ./
+EXPOSE 5000
+ENTRYPOINT ["dotnet", "watch", "run", "-c", "Debug"]
