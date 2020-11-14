@@ -4,7 +4,6 @@
     <TargetFramework>net5.0</TargetFramework>
     <AssemblyName>Somnifero.App</AssemblyName>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
-    <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,12 +15,8 @@
 
   <ItemGroup>
     <Watch Include="**\*.cshtml" Exclude="bin\**\*" />
-    <Content Include="WebRoot\**" />
-    <Content Include="Views\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Watch Remove="Views\Portal\Me.cshtml" />
+    <Content Include="WebRoot\**" CopyToOutputDirectory="PreserveNewest"   />
+    <Content Include="Views\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
