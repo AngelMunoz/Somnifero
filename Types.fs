@@ -12,6 +12,8 @@ type SignUpPayload =
       invite: string }
 
 type User =
-    { name: string
+    { _id: string
+      name: string
       lastName: string
-      email: string }
+      email: string
+      invite: string }
