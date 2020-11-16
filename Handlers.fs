@@ -14,7 +14,42 @@ open Microsoft.AspNetCore.Http
 open Giraffe
 open Giraffe.Razor.HttpHandlers
 
-open Somnifero.Models
+open Somnifero.Types
+open Somnifero.ViewModels
+open Microsoft.Extensions.Logging
+
+
+module Public =
+    let Index =
+        let inline (+>) a b = a, box b
+        fun (next: HttpFunc) (ctx: HttpContext) ->
+            task {
+                let data =
+                    dict<string, obj>
+                        [ "Title" +> "Welcome"
+                          "HeaderData" +> { routeGroups = Seq.empty }
+                          "FooterData"
+                          +> { routeGroups = Seq.empty
+                               extraData = None } ]
+                    |> Some
+
+                if ctx.User.Identity.IsAuthenticated
+                then return! redirectTo false "/portal/home" next ctx
+                else return! razorHtmlView "Index" None data None next ctx
+            }
+
+
+    let InvalidCSRFToken: HttpHandler =
+        clearResponse
+        >=> RequestErrors.BAD_REQUEST "The CSRF token was invalid"
+
+    let ServerError (ex: Exception) (logger: ILogger) =
+        logger.LogError(ex, "An unhandled exception has occurred while executing the request.")
+
+        clearResponse
+        >=> setStatusCode 500
+        >=> text "There was an error within our servers."
+
 
 module Auth =
 
@@ -63,7 +98,7 @@ module Auth =
                 return! json {| exists = payload.email = "abc@123.com" |} next ctx
             }
 
-    let Signup (invite: string): HttpHandler =
+    let Signup: HttpHandler =
         fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
                 let! signuppayload = JsonSerializer.DeserializeAsync<SignUpPayload>(ctx.Request.Body)

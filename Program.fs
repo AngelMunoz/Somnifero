@@ -6,14 +6,11 @@ open System
 open System.IO
 open System.Text.Json
 open System.Text.Json.Serialization
-open System.Threading.Tasks
 
-open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Cors.Infrastructure
 open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.SignalR
+open Microsoft.AspNetCore.Http
 
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
@@ -25,62 +22,24 @@ open Giraffe.Serialization
 
 open Somnifero.Hubs
 open Somnifero.Handlers
-open Somnifero.Models
-open Microsoft.AspNetCore.Http
-
-type SystemTextJsonSerializer(options: JsonSerializerOptions) =
-    interface IJsonSerializer with
-        member _.Deserialize<'T>(string: string) =
-            JsonSerializer.Deserialize<'T>(string, options)
-
-        member _.Deserialize<'T>(bytes: byte []) =
-            JsonSerializer.Deserialize<'T>(ReadOnlySpan bytes, options)
-
-        member _.DeserializeAsync<'T>(stream) =
-            JsonSerializer
-                .DeserializeAsync<'T>(stream, options)
-                .AsTask()
-
-        member _.SerializeToBytes<'T>(value: 'T) =
-            JsonSerializer.SerializeToUtf8Bytes<'T>(value, options)
-
-        member _.SerializeToStreamAsync<'T> (value: 'T) stream =
-            JsonSerializer.SerializeAsync<'T>(stream, value, options)
-
-        member _.SerializeToString<'T>(value: 'T) =
-            JsonSerializer.Serialize<'T>(value, options)
-
 
 // ---------------------------------
 // Web app
 // ---------------------------------
 
-let indexHandler =
-    let inline (+>) a b = a, box b
-
-    let data =
-        dict<string, obj>
-            [ "Title" +> "Welcome"
-              "HeaderData"
-              +> { routeGroups = Seq.empty
-                   isAuthenticated = false }
-              "FooterData"
-              +> { routeGroups = Seq.empty
-                   remarks = ""
-                   extraData = None } ]
-        |> Some
-
-    razorHtmlView "Index" None data None
-
 let webApp =
-    choose [ GET >=> route "/" >=> indexHandler
+    choose [ GET >=> route "/" >=> Public.Index
+             route "/auth/signout"
+             >=> signOut CookieAuthenticationDefaults.AuthenticationScheme
+             >=> redirectTo false "/"
              POST
-             >=> (choose [ route "/auth/login" >=> Auth.Login
+             >=> (choose [ route "/auth/login"
+                           >=> validateAntiforgeryToken Public.InvalidCSRFToken
+                           >=> Auth.Login
                            route "/auth/exists" >=> Auth.CheckExists
-                           routef "/auth/signup/%s" Auth.Signup
-                           route "/auth/signout"
-                           >=> signOut CookieAuthenticationDefaults.AuthenticationScheme
-                           >=> redirectTo false "/" ])
+                           route "/auth/signup"
+                           >=> validateAntiforgeryToken Public.InvalidCSRFToken
+                           >=> Auth.Signup ])
              subRoute
                  "/portal"
                  (requiresAuthentication (challenge CookieAuthenticationDefaults.AuthenticationScheme)
@@ -94,27 +53,10 @@ let webApp =
 
              setStatusCode 404 >=> text "Not Found" ]
 
-// ---------------------------------
-// Error handler
-// ---------------------------------
-
-let errorHandler (ex: Exception) (logger: ILogger) =
-    logger.LogError(ex, "An unhandled exception has occurred while executing the request.")
-
-    clearResponse
-    >=> setStatusCode 500
-    >=> text ex.Message
 
 // ---------------------------------
 // Config and Main
 // ---------------------------------
-
-//let configureCors (builder: CorsPolicyBuilder) =
-//    builder
-//        .WithOrigins("*")
-//        .AllowAnyMethod()
-//        .AllowAnyHeader()
-//    |> ignore
 
 let configureApp (app: IApplicationBuilder) =
     let env =
@@ -122,14 +64,32 @@ let configureApp (app: IApplicationBuilder) =
 
     (match env.EnvironmentName with
      | "Development" -> app.UseDeveloperExceptionPage()
-     | _ -> app.UseGiraffeErrorHandler(errorHandler))
-        //.UseCors(configureCors)
-        .UseStaticFiles()
-        .UseRouting()
-        .UseAuthentication()
+     | _ -> app.UseGiraffeErrorHandler(Public.ServerError)).UseStaticFiles().UseRouting().UseAuthentication()
         .UseAuthorization()
-        .UseEndpoints(fun ep -> ep.MapHub<StatsHub>("/stats") |> ignore)
-        .UseGiraffe(webApp)
+        .UseEndpoints(fun ep ->
+                     ep.MapHub<StatsHub>("/stats") |> ignore
+                     ep.MapHub<RoomsHub>("/rooms") |> ignore).UseGiraffe(webApp)
+
+
+type SystemTextJsonSerializer(options: JsonSerializerOptions) =
+    interface IJsonSerializer with
+        member _.Deserialize<'T>(string: string) =
+            JsonSerializer.Deserialize<'T>(string, options)
+
+        member _.Deserialize<'T>(bytes: byte []) =
+            JsonSerializer.Deserialize<'T>(ReadOnlySpan bytes, options)
+
+        member _.DeserializeAsync<'T>(stream) =
+            JsonSerializer.DeserializeAsync<'T>(stream, options).AsTask()
+
+        member _.SerializeToBytes<'T>(value: 'T) =
+            JsonSerializer.SerializeToUtf8Bytes<'T>(value, options)
+
+        member _.SerializeToStreamAsync<'T> (value: 'T) stream =
+            JsonSerializer.SerializeAsync<'T>(stream, value, options)
+
+        member _.SerializeToString<'T>(value: 'T) =
+            JsonSerializer.Serialize<'T>(value, options)
 
 let configureServices (services: IServiceCollection) =
     let sp = services.BuildServiceProvider()
@@ -148,9 +108,8 @@ let configureServices (services: IServiceCollection) =
     services.AddRazorEngine viewsFolderPath |> ignore
     services.AddCors() |> ignore
 
-    services
-        .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-        .AddCookie(fun o -> o.LoginPath <- PathString("/"))
+    services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(fun o -> o.LoginPath <- PathString("/"))
     |> ignore
 
     services.AddSignalR() |> ignore
@@ -161,16 +120,10 @@ let main args =
     let contentRoot = Directory.GetCurrentDirectory()
     let webRoot = Path.Combine(contentRoot, "WebRoot")
 
-    Host
-        .CreateDefaultBuilder(args)
+    Host.CreateDefaultBuilder(args)
         .ConfigureWebHostDefaults(fun webHostBuilder ->
-            webHostBuilder
-                .UseContentRoot(contentRoot)
-                .UseWebRoot(webRoot)
-                .Configure(Action<IApplicationBuilder> configureApp)
-                .ConfigureServices(configureServices)
-            |> ignore)
-        .Build()
-        .Run()
+        webHostBuilder.UseContentRoot(contentRoot).UseWebRoot(webRoot)
+                      .Configure(Action<IApplicationBuilder> configureApp).ConfigureServices(configureServices)
+        |> ignore).Build().Run()
 
     0
