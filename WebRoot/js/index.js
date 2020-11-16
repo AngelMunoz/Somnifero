@@ -7,25 +7,28 @@ class LoginFormViewModel {
     this.password = "";
   }
 
-  async submit() {
-    try {
-      const form = document.querySelector('[name=loginform]');
-      const token = getCSRFTokenFromForm(form);
-      const result =
-        await fetch("/auth/login", {
-          body: JSON.stringify({ email: this.email, password: this.password }),
-          method: 'POST',
-          headers: {
-            Accept: 'application/json',
-            RequestVerificationToken: token,
-            'Content-Type': 'application/json',
-          }
-        }).then(res => res.json())
-      console.log(result);
-      location.reload();
-    } catch (error) {
-      console.error({ error });
-    }
+  submit() {
+    const form = document.querySelector('[name=loginform]');
+    const token = getCSRFTokenFromForm(form);
+    return fetch("/auth/login", {
+      body: JSON.stringify({ email: this.email, password: this.password }),
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        RequestVerificationToken: token,
+        'Content-Type': 'application/json',
+      }
+    })
+      .then(res => res.ok ? res.json() : res.json().then(res => Promise.reject(res)))
+      .then(() => location.reload())
+      .catch(error => {
+        UIkit.notification({
+          message: error.message,
+          status: 'danger',
+          pos: 'top-right',
+          timeout: 2500
+        });
+      });
   }
 
 }
@@ -43,33 +46,35 @@ class SignupViewModel {
     this.invite = "";
   }
 
-  async submit() {
-    try {
-      const form = document.querySelector('[name=signupform]');
-      const token = getCSRFTokenFromForm(form);
-      const body =
-        JSON.stringify({
-          email: this.email,
-          password: this.password,
-          name: this.name,
-          lastName: this.lastName,
-          invite: this.invite,
+  submit() {
+    const form = document.querySelector('[name=signupform]');
+    const token = getCSRFTokenFromForm(form);
+    const body =
+      JSON.stringify({
+        email: this.email,
+        password: this.password,
+        name: this.name,
+        lastName: this.lastName,
+        invite: this.invite,
+      });
+    return fetch("/auth/signup", {
+      body,
+      headers: {
+        Accept: "application/json",
+        RequestVerificationToken: token,
+        "content-type": 'application/json',
+      },
+      method: 'POST',
+    }).then(res => res.ok ? res.json() : res.json().then(res => Promise.reject(res)))
+      .then(() => location.reload())
+      .catch(error => {
+        UIkit.notification({
+          message: error.message,
+          status: 'danger',
+          pos: 'top-right',
+          timeout: 2500
         });
-      const result =
-        await fetch("/auth/signup", {
-          body,
-          headers: {
-            Accept: "application/json",
-            RequestVerificationToken: token,
-            "content-type": 'application/json',
-          },
-          method: 'POST',
-        }).then(res => res.json())
-      console.log(result);
-      location.reload();
-    } catch (error) {
-      console.error({ error });
-    }
+      });
   }
 
   async checkExists() {
