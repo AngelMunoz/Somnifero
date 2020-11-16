@@ -7,24 +7,27 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FSharp.SystemTextJson" Version="0.14.8" />
-    <PackageReference Include="Giraffe" Version="4.1.*" />
-    <PackageReference Include="Giraffe.Razor" Version="5.0.*" />
-    <PackageReference Include="Ply" Version="0.3.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Watch Include="**\*.cshtml" Exclude="bin\**\*" />
-    <Content Include="WebRoot\**" CopyToOutputDirectory="PreserveNewest"   />
-    <Content Include="Views\**" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="Models.fs" />
+    <Compile Include="Types.fs" />
+    <Compile Include="Database.fs" />
+    <Compile Include="ViewModels.fs" />
     <Compile Include="Hubs.fs" />
     <Compile Include="Handlers.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
-  <ItemGroup />
+  <ItemGroup>
+    <Watch Include="**\*.cshtml" Exclude="bin\**\*" />
+    <Content Include="WebRoot\**" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Views\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ply" Version="0.3.1" />
+    <PackageReference Include="Giraffe" Version="4.1.*" />
+    <PackageReference Include="Giraffe.Razor" Version="5.0.*" />
+    <PackageReference Include="FSharp.SystemTextJson" Version="0.14.8" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.0" />
+    <PackageReference Include="MongoDB.Bson" Version="2.11.4" />
+    <PackageReference Include="MongoDB.Driver" Version="2.11.4" />
+  </ItemGroup>
 </Project>
