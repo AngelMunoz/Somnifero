@@ -1,3 +1,20 @@
-<header>
-    <h3>Portal Index</h3>
-</header>
+
+@{
+    Layout = "../_Layout";
+    ViewData["Title"] = "Portal";
+    var headerData = ViewData["HeaderData"] as HeaderData;
+    var footerData = ViewData["FooterData"] as FooterData;
+}
+@section Header {
+  @await Html.PartialAsync("../Shared/_Header", headerData)
+}
+
+<main class="som-main" name="portal"></main>
+
+@section Scripts {
+<script src="/js/portal/index.js" type="module"></script>
+}
+
+@section Footer {
+  @await Html.PartialAsync("../Shared/_Footer", footerData)
+}

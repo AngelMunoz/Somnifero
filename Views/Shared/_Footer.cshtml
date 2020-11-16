@@ -1,11 +1,20 @@
-@using Microsoft.FSharp.Core
-@model Somnifero.Models.FooterData
+@model Somnifero.ViewModels.FooterData
 
-<footer>
-    @if (OptionModule.IsNone(@Model.extraData))
+<footer class="som-footer uk-flex uk-flex-around uk-column-1-2@s uk-column-1-4">
+    @if (@Model != null && OptionModule.IsSome(@Model.extraData))
     {
-        <span>Yup, it's None</span>
-    } else {
-        <span>Nope, it's Some</span>
+        <section>
+            <ul class="uk-nav">
+                @foreach (var (key, value) in @Model.extraData.Value)
+                {
+                    <li>
+                        <a href="@value" rel="noopener noreferer">@key</a>
+                    </li>
+                }
+            </ul>
+        </section>
     }
+    <section class="uk-column-span">
+        Tunaxor Apps. &copy; 2020
+    </section>
 </footer>

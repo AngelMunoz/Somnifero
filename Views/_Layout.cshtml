@@ -8,15 +8,15 @@
   @RenderSection("HeadExtras", required: false)
 </head>
 
-<body>  
-  <article>
+<body>
+  <article class="som-content">
     @RenderSection("Header", required: false)
     @RenderBody()
     @RenderSection("Footer", required: false)
   </article>
-  <script src='https://unpkg.com/aurelia-script@1.5.2'></script>
   <script src="https://cdn.jsdelivr.net/npm/uikit@3.5.9/dist/js/uikit.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/uikit@3.5.9/dist/js/uikit-icons.min.js"></script>
+  <script src="https://unpkg.com/@@microsoft/signalr@5.0.0/dist/browser/signalr.js"></script>
   @RenderSection("Scripts", required: false)
 </body>
 

@@ -10,3 +10,25 @@ body {
   flex-direction: column;
   height: 100vh;
 }
+
+.som-content {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.som-header {
+  flex: 0 1 auto;
+}
+
+.som-footer {
+  flex: 0 1 auto;
+  padding: 0 1.5em;
+}
+
+.som-main {
+  display: flex;
+  flex-direction: column;
+  flex: 2 0 auto;
+  padding: 0 1.5em;
+}

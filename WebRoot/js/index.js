@@ -1,4 +1,6 @@
-﻿class LoginFormViewModel {
+﻿import { enhance } from 'https://unpkg.com/aurelia-script@1.5.2/dist/aurelia.esm.min.js'
+
+class LoginFormViewModel {
 
   constructor() {
     this.email = "";
@@ -6,15 +8,24 @@
   }
 
   async submit() {
-    const result =
-      await fetch("/auth/login", {
-        body: JSON.stringify({ email: this.email, password: this.password }),
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json'
-        }
-      }).then(res => res.json())
+    try {
+      const form = document.querySelector('[name=loginform]');
+      const token = getCSRFTokenFromForm(form);
+      const result =
+        await fetch("/auth/login", {
+          body: JSON.stringify({ email: this.email, password: this.password }),
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            RequestVerificationToken: token,
+            'Content-Type': 'application/json',
+          }
+        }).then(res => res.json())
+      console.log(result);
+      location.reload();
+    } catch (error) {
+      console.error({ error });
+    }
   }
 
 }
@@ -29,11 +40,36 @@ class SignupViewModel {
     this.repeatPassword = "";
     this.name = "";
     this.lastName = "";
-
+    this.invite = "";
   }
 
-  checkPassword() {
-    this.isValidPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/.test(this.password) && this.password === this.repeatPassword;
+  async submit() {
+    try {
+      const form = document.querySelector('[name=signupform]');
+      const token = getCSRFTokenFromForm(form);
+      const body =
+        JSON.stringify({
+          email: this.email,
+          password: this.password,
+          name: this.name,
+          lastName: this.lastName,
+          invite: this.invite,
+        });
+      const result =
+        await fetch("/auth/signup", {
+          body,
+          headers: {
+            Accept: "application/json",
+            RequestVerificationToken: token,
+            "content-type": 'application/json',
+          },
+          method: 'POST',
+        }).then(res => res.json())
+      console.log(result);
+      location.reload();
+    } catch (error) {
+      console.error({ error });
+    }
   }
 
   async checkExists() {
@@ -49,17 +85,29 @@ class SignupViewModel {
     this.emailExists = result.exists;
   }
 
+  checkPassword() {
+    this.isValidPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/.test(this.password) && this.password === this.repeatPassword;
+  }
+
 }
 
 
-au
-  .enhance({
-    host: document.querySelector('.loginsection'),
-    root: LoginFormViewModel
-  });
+enhance({
+  host: document.querySelector('.loginsection'),
+  root: LoginFormViewModel
+});
 
-au
-  .enhance({
-    host: document.querySelector('.signupsection'),
-    root: SignupViewModel
-  });
+enhance({
+  host: document.querySelector('.signupsection'),
+  root: SignupViewModel
+});
+
+/**
+ * 
+ * @param {HTMLFormElement} form 
+ */
+function getCSRFTokenFromForm(form) {
+  const tokenInput = form.querySelector('input[name=__RequestVerificationToken]');
+  const token = tokenInput?.value;
+  return token;
+}

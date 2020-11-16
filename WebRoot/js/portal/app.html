@@ -1,0 +1,6 @@
+<template>
+    <ul class="uk-nav" name="hubsnav">
+        <li repeat.for="hub of hubs" click.delegate="startHub(hub)">${hub}</li>
+    </ul>
+    <section name="chat"></section>
+</template>

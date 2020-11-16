@@ -1,14 +1,14 @@
-@using Somnifero.Models;
+@using Somnifero.ViewModels;
 
 @{
     Layout = "_Layout";
-    var headerData = @ViewData["HeaderData"] as HeaderData;
-    var footerData = @ViewData["FooterData"] as FooterData;
+    var headerData = ViewData["HeaderData"] as HeaderData;
+    var footerData = ViewData["FooterData"] as FooterData;
 }
 @section Header {
   @await Html.PartialAsync("_Header", headerData)
 }
-<main>
+<main class="som-main">
   <ul class="uk-subnav uk-subnav-pill" uk-switcher>
     <li><a href="#">Welcome Back</a></li>
     <li><a href="#">Register</a></li>
@@ -18,6 +18,7 @@
     <li>
       <section class="loginsection">
         <form name="loginform" submit.trigger="submit()">
+          @Html.AntiForgeryToken()
           <fieldset class="uk-fieldset">
             <legend class="uk-legend">Welcome</legend>
             <div class="uk-margin">
@@ -38,7 +39,8 @@
     </li>
     <li>
       <section class="signupsection">
-        <form name="submitform" submit.trigger="submit()">
+        <form name="signupform" submit.trigger="submit()">
+          @Html.AntiForgeryToken()
           <fieldset class="uk-fieldset">
             <legend class="uk-legend">Personal Info</legend>
             <div class="uk-margin">
@@ -46,8 +48,12 @@
               <input class="uk-input" type="text" name="name" required value.bind="name" />
             </div>
             <div class="uk-margin">
-              <label for="lastName">Password:</label>
+              <label for="lastName">Last Name:</label>
               <input class="uk-input" type="text" name="lastName" required value.bind="lastName" />
+            </div>
+            <div class="uk-margin">
+              <label for="invite">Invite Code:</label>
+              <input class="uk-input" type="text" name="invite" required value.bind="invite" />
             </div>
           </fieldset>
           <fieldset class="uk-fieldset">
