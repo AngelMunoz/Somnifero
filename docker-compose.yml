@@ -12,6 +12,8 @@ services:
       - .:/app
     ports:
       - 5000:5000
+    links: 
+      - mongodb:database
     depends_on:
       - mongodb
   mongodb:
