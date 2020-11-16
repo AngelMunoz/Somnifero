@@ -5,20 +5,8 @@ aurelia
     .standardConfiguration()
     .developmentLogging();
 
-const roomsHub = new signalR.HubConnectionBuilder()
-    .withUrl("/rooms")
-    .configureLogging(signalR.LogLevel.Information)
-    .build();
-
-Promise.all([aurelia.start(), roomsHub.start()])
-    .then(([aur]) => {
-        aur
-            .container
-            .registerSingleton("RoomsHub", function RoomsHub() {
-                return roomsHub;
-            });
-        return aur.setRoot(PLATFORM.moduleName("/js/portal/app.js"), document.querySelector("[name=portal]"));
-    })
+aurelia.start()
+    .then(aur => aur.setRoot(PLATFORM.moduleName("/js/portal/app.js"), document.querySelector("[name=portal]")))
     .catch(error => {
         console.error(`Something went wrong starting the portal page:\n"${error.message}"`);
         UIkit.notification({

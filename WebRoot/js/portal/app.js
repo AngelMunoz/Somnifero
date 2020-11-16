@@ -1,21 +1,25 @@
-
+const roomsHub = new signalR.HubConnectionBuilder()
+    .withUrl("/rooms")
+    .configureLogging(signalR.LogLevel.Information)
+    .build();
 
 export class App {
 
-    static get inject() {
-        return ['RoomsHub'];
-    }
-
-    constructor(roomHub) {
+    constructor() {
+        this.$roomHub = roomsHub;
         this.hubs = [];
-        this.$roomHub = roomHub;
     }
 
     activate() {
-        return this.$roomHub.invoke("GetHubs")
+        return this.$roomHub.start()
+            .then(() => this.$roomHub.invoke("GetHubs"))
             .then(result => {
                 this.hubs = [...result];
             });
+    }
+
+    deactivate() {
+        return this.$roomHub.stop()
     }
 
     startHub(hub) {
