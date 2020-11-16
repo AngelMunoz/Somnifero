@@ -11,12 +11,16 @@ open Microsoft.AspNetCore.Authentication
 open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.AspNetCore.Http
 
+open Microsoft.Extensions.Logging
+
 open Giraffe
 open Giraffe.Razor.HttpHandlers
 
+open BCrypt.Net
+
+open Somnifero
 open Somnifero.Types
 open Somnifero.ViewModels
-open Microsoft.Extensions.Logging
 
 
 module Public =
@@ -60,6 +64,7 @@ module Auth =
                     ([ new Claim(ClaimTypes.Name, user.email)
                        new Claim("FirstName", user.name)
                        new Claim("LastName", user.lastName)
+                       new Claim("Invite", user.invite)
                        new Claim(ClaimTypes.Email, user.email) ],
                      CookieAuthenticationDefaults.AuthenticationScheme)
 
@@ -78,16 +83,29 @@ module Auth =
         fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
                 let! loginpayload = JsonSerializer.DeserializeAsync<LoginPayload>(ctx.Request.Body)
-                printfn $"{loginpayload.email} - {loginpayload.password}"
 
-                let user =
-                    { email = loginpayload.email
-                      lastName = "munoz"
-                      name = "Daniel" }
+                let! queryResult = Users.TryFindUserByEmail loginpayload.email true
 
-                do! signin ctx user
+                let response =
+                    task {
+                        match queryResult with
+                        | Some user ->
+                            match user with
+                            | Users.UserWithPassword user ->
+                                if BCrypt.EnhancedVerify(loginpayload.password, user.password) then
+                                    do! signin
+                                            ctx
+                                            { email = user.email
+                                              name = user.name
+                                              lastName = user.lastName
+                                              invite = user.invite }
 
-                return! json { User = user.email } next ctx
+                                return! json { User = user.email } next ctx
+                            | _ -> return! RequestErrors.BAD_REQUEST {| message = "Invalid Credentials" |} next ctx
+                        | _ -> return! RequestErrors.BAD_REQUEST {| message = "Invalid Credentials" |} next ctx
+                    }
+
+                return! response
             }
 
     let CheckExists: HttpHandler =
@@ -102,16 +120,44 @@ module Auth =
         fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
                 let! signuppayload = JsonSerializer.DeserializeAsync<SignUpPayload>(ctx.Request.Body)
-                printfn $"{signuppayload.email} - {signuppayload.password}"
+                let! emailExists = Users.EmailExists signuppayload.email
 
-                let user =
-                    { email = signuppayload.email
-                      lastName = signuppayload.name
-                      name = signuppayload.email }
+                let! inviteExists = Users.InviteExists signuppayload.invite
 
-                do! signin ctx user
+                return! task {
+                            match emailExists, inviteExists with
+                            | true, _ ->
+                                return! RequestErrors.BAD_REQUEST {| message = "Email already exists" |} next ctx
+                            | _, false ->
+                                return! RequestErrors.BAD_REQUEST {| message = "Invite Does not exist" |} next ctx
+                            | false, true ->
+                                let! didCreate =
+                                    Users.TryCreateUser
+                                        {| email = signuppayload.email
+                                           password = signuppayload.password
+                                           name = signuppayload.name
+                                           lastName = signuppayload.lastName
+                                           invite = "" |}
 
-                return! json { User = user.email } next ctx
+                                match didCreate with
+                                | Ok _ ->
+                                    do! signin
+                                            ctx
+                                            { email = signuppayload.email
+                                              name = signuppayload.name
+                                              lastName = signuppayload.lastName
+                                              invite = signuppayload.invite }
+                                    return! json { User = signuppayload.email } next ctx
+                                | Error ex ->
+                                    printfn $"Falied to create user {ex.Message} - {ex}"
+                                    return! RequestErrors.UNPROCESSABLE_ENTITY
+                                                {| message = "There was an error creating this account" |}
+                                                next
+                                                ctx
+
+                        }
+
+
             }
 
 module Api =
