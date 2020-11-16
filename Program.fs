@@ -6,14 +6,15 @@ open System
 open System.IO
 open System.Text.Json
 open System.Text.Json.Serialization
+open System.Threading.Tasks
 
 open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.StaticFiles
 
 open Microsoft.Extensions.Hosting
-open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 
 open Giraffe
@@ -62,13 +63,33 @@ let configureApp (app: IApplicationBuilder) =
     let env =
         app.ApplicationServices.GetService<IWebHostEnvironment>()
 
-    (match env.EnvironmentName with
-     | "Development" -> app.UseDeveloperExceptionPage()
-     | _ -> app.UseGiraffeErrorHandler(Public.ServerError)).UseStaticFiles().UseRouting().UseAuthentication()
-        .UseAuthorization()
-        .UseEndpoints(fun ep ->
-                     ep.MapHub<StatsHub>("/stats") |> ignore
-                     ep.MapHub<RoomsHub>("/rooms") |> ignore).UseGiraffe(webApp)
+    if env.EnvironmentName = "Development"
+    then app.UseDeveloperExceptionPage()
+    else app.UseGiraffeErrorHandler(Public.ServerError)
+    |> ignore
+    let staticopts = StaticFileOptions()
+    staticopts.OnPrepareResponse <-
+        new Action<StaticFileResponseContext>(fun ctx ->
+        ctx.Context.Response.Headers.Append
+            ("X-Content-Type-Options", Microsoft.Extensions.Primitives.StringValues("nosniff")))
+    app.UseStaticFiles(staticopts) |> ignore
+    app.UseRouting() |> ignore
+    app.UseAuthentication() |> ignore
+    app.UseAuthorization() |> ignore
+    app.UseEndpoints(fun ep ->
+        ep.MapHub<StatsHub>("/stats") |> ignore
+        ep.MapHub<RoomsHub>("/rooms") |> ignore)
+    |> ignore
+    app.Use
+        (new Func<HttpContext, Func<Task>, Task>(fun context next ->
+        task {
+            context.Response.Headers.Add
+                ("X-Content-Type-Options", Microsoft.Extensions.Primitives.StringValues("nosniff"))
+            do! next.Invoke()
+        } :> Task))
+    |> ignore
+    app.UseGiraffe(webApp)
+
 
 
 type SystemTextJsonSerializer(options: JsonSerializerOptions) =
