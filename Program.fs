@@ -33,6 +33,8 @@ let webApp =
              route "/auth/signout"
              >=> signOut CookieAuthenticationDefaults.AuthenticationScheme
              >=> redirectTo false "/"
+             GET >=> route "/broadcast" >=> Public.Broadcast
+             GET >=> route "/watch-broadcast" >=> Public.Watch
              POST
              >=> (choose [ route "/auth/login"
                            >=> validateAntiforgeryToken Public.InvalidCSRFToken
@@ -82,7 +84,8 @@ let configureApp (app: IApplicationBuilder) =
 
     app.UseEndpoints(fun ep ->
         ep.MapHub<StatsHub>("/stats") |> ignore
-        ep.MapHub<RoomsHub>("/rooms") |> ignore)
+        ep.MapHub<RoomsHub>("/rooms") |> ignore
+        ep.MapHub<VideoChatHub>("/videochat") |> ignore)
     |> ignore
 
     app.Use

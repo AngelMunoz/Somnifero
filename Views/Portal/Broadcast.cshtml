@@ -1,0 +1,38 @@
+﻿@{
+    Layout = "../_Layout";
+    ViewData["Title"] = "Broadcast";
+    var headerData = ViewData["HeaderData"] as HeaderData;
+}
+@section Header {
+  @await Html.PartialAsync("../Shared/_Header", headerData)
+}
+
+<main class="som-main" name="broadcast">
+  <section>
+    <label for="audioSource">Audio source: </label>
+    <select value.bind="selectedAudio.id" change.delegate="onAudioSourceChanged()">
+      <option model.bind="null">Choose...</option>
+      <option repeat.for="device of audioDevices"
+              model.bind="device.id">
+        ${device.id} - ${device.label}
+      </option>
+    </select>
+  </section>
+  <section>
+    <label for="videoSource">Video source: </label>
+    <select value.bind="selectedVideo.id" change.delegate="onVideoSourceChanged()">
+      <option model.bind="null">Choose...</option>
+      <option repeat.for="device of videoDevices"
+              model.bind="device.id">
+        ${device.id} - ${device.label}
+      </option>
+    </select>
+  </section>
+
+  <video playsinline autoplay muted ref="videoTag"></video>
+
+</main>
+
+@section Scripts {
+<script src="/js/portal/videochat.js" type="module"></script>
+}

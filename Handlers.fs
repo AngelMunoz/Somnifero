@@ -24,8 +24,10 @@ open Somnifero.ViewModels
 
 
 module Public =
+    let inline (+>) a b = a, box b
+
     let Index =
-        let inline (+>) a b = a, box b
+
         fun (next: HttpFunc) (ctx: HttpContext) ->
             task {
                 let data =
@@ -42,6 +44,35 @@ module Public =
                 else return! razorHtmlView "Index" None data None next ctx
             }
 
+    let Broadcast =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
+            task {
+                let data =
+                    dict<string, obj>
+                        [ "Title" +> "Broadcast"
+                          "HeaderData" +> { routeGroups = Seq.empty }
+                          "FooterData"
+                          +> { routeGroups = Seq.empty
+                               extraData = None } ]
+                    |> Some
+
+                return! razorHtmlView "Portal/Broadcast" None data None next ctx
+            }
+
+    let Watch = 
+        fun (next: HttpFunc) (ctx: HttpContext) ->
+            task {
+                let data =
+                    dict<string, obj>
+                        [ "Title" +> "Watch Broadcast"
+                          "HeaderData" +> { routeGroups = Seq.empty }
+                          "FooterData"
+                          +> { routeGroups = Seq.empty
+                               extraData = None } ]
+                    |> Some
+
+                return! razorHtmlView "Portal/WatchBroadcast" None data None next ctx
+            }
 
     let InvalidCSRFToken: HttpHandler =
         clearResponse
@@ -126,42 +157,42 @@ module Auth =
 
                 let! inviteExists = Users.InviteExists signuppayload.invite
 
-                return! task {
-                            match emailExists, inviteExists with
-                            | true, _ ->
-                                return! RequestErrors.BAD_REQUEST {| message = "Email already exists" |} next ctx
-                            | _, false ->
-                                return! RequestErrors.BAD_REQUEST {| message = "Invite Does not exist" |} next ctx
-                            | false, true ->
-                                let! didCreate =
-                                    Users.TryCreateUser
-                                        {| email = signuppayload.email
-                                           password = signuppayload.password
-                                           name = signuppayload.name
-                                           lastName = signuppayload.lastName
-                                           invite = "" |}
+                return!
+                    task {
+                        match emailExists, inviteExists with
+                        | true, _ -> return! RequestErrors.BAD_REQUEST {| message = "Email already exists" |} next ctx
+                        | _, false -> return! RequestErrors.BAD_REQUEST {| message = "Invite Does not exist" |} next ctx
+                        | false, true ->
+                            let! didCreate =
+                                Users.TryCreateUser
+                                    {| email = signuppayload.email
+                                       password = signuppayload.password
+                                       name = signuppayload.name
+                                       lastName = signuppayload.lastName
+                                       invite = "" |}
 
-                                match didCreate with
-                                | Ok _ ->
-                                    let! user = Users.TryFindUserByEmail signuppayload.email false
+                            match didCreate with
+                            | Ok _ ->
+                                let! user = Users.TryFindUserByEmail signuppayload.email false
 
+                                match user with
+                                | Some user ->
                                     match user with
-                                    | Some user ->
-                                        match user with
-                                        | Users.User user -> do! signin ctx user
-                                        | _ -> ()
-                                    | None -> ()
+                                    | Users.User user -> do! signin ctx user
+                                    | _ -> ()
+                                | None -> ()
 
-                                    return! json { User = signuppayload.email } next ctx
-                                | Error ex ->
-                                    printfn $"Falied to create user {ex.Message} - {ex}"
-                                    return! RequestErrors.UNPROCESSABLE_ENTITY
-                                                {| message = "There was an error creating this account" |}
-                                                next
-                                                ctx
+                                return! json { User = signuppayload.email } next ctx
+                            | Error ex ->
+                                printfn $"Falied to create user {ex.Message} - {ex}"
 
-                        }
+                                return!
+                                    RequestErrors.UNPROCESSABLE_ENTITY
+                                        {| message = "There was an error creating this account" |}
+                                        next
+                                        ctx
 
+                    }
 
             }
 

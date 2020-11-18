@@ -1,0 +1,21 @@
+﻿@{
+    Layout = "../_Layout";
+    ViewData["Title"] = "VideoChat";
+    var headerData = ViewData["HeaderData"] as HeaderData;
+}
+@section Header {
+  @await Html.PartialAsync("../Shared/_Header", headerData)
+}
+
+<main class="som-main" name="watch">
+  <label>
+    Mute broadcast
+    <input type="checkbox" name="mute" checked.bind="muted" />
+  </label>
+  <video playsinline autoplay muted.bind="muted" ref="videoTag"></video>
+
+</main>
+
+@section Scripts {
+<script src="/js/portal/watch.js" type="module"></script>
+}
