@@ -1,6 +1,54 @@
 <template>
-    <ul class="uk-nav" name="hubsnav">
-        <li repeat.for="hub of hubs" click.delegate="startHub(hub)">${hub}</li>
-    </ul>
-    <section name="chat"></section>
+    <require from="./app.css"></require>
+    <article class="chathub">
+        <aside class="room-list">
+            <ul uk-accordion>
+                <li>
+                    <a class="uk-accordion-title">Add Group</a>
+                    <div class="uk-accordion-content">
+                        <form submit.trigger="addRoom($event)">
+                            <input type="text" required value.bind="newRoomParams.name">
+                            <section>
+                                <label for="">Public Room: </label>
+                                <label for="">
+                                    Yes
+                                    <input required type="radio" name="isPublic" model.bind="true" checked.bind="newRoomParams.isPublic">
+                                </label>
+                                <label for="">
+                                    No
+                                    <input required type="radio" name="isPublic" model.bind="false" checked.bind="newRoomParams.isPublic">
+                                </label>
+                            </section>
+                            <button type="submit">Add Room</button>
+                        </form>
+                    </div>
+                </li>
+            </ul>
+            <ul class="uk-nav">
+                <li repeat.for="hub of hubs">
+                    <button class="uk-button uk-button-default uk-button-small" click.delegate="startHub(hub)">${hub.name}</button>
+                </li>
+            </ul>
+            <section>
+                <p>Page ${pagination.page} of ${pages}</p>
+                <p>Showing ${pagination.limit} of ${pagination.count} public rooms</p>
+            </section>
+        </aside>
+        <nav class="room-nav">
+            <ul uk-tab>
+                <li repeat.for="[name, tab] of activeHubs" class="${activeTab.name === tab.name ? 'uk-active' : ''}" click.delegate="setActiveTab(tab)">
+                    <a>${tab.name} <span class="uk-margin-small-right" uk-icon="close" click.delegate="closeTab(tab)"></span></a>
+                </li>
+            </ul>
+        </nav>
+        <section class="room-chat">
+            <p repeat.for="message of activeTab.messages">${message}</p>
+        </section>
+        <section class="room-message-bar">
+            <form submit.trigger="sendMessage()" if.bind="activeTab" class="message-form">
+                <textarea cols="30" rows="10" value.bind="draft"></textarea>
+                <button type="submit">Send</button>
+            </form>
+        </section>
+    </article>
 </template>

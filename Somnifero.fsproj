@@ -4,6 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <AssemblyName>Somnifero.App</AssemblyName>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>

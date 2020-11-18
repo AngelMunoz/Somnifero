@@ -2,8 +2,8 @@
   "profiles": {
     "Somnifero": {
       "commandName": "Project",
-      "launchBrowser": false,
       "environmentVariables": {
+        "MONGO_URL": "mongodb://localhost:27017",
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "applicationUrl": "http://0.0.0.0:5000"

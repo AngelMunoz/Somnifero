@@ -67,27 +67,30 @@ let configureApp (app: IApplicationBuilder) =
     then app.UseDeveloperExceptionPage()
     else app.UseGiraffeErrorHandler(Public.ServerError)
     |> ignore
+
     let staticopts = StaticFileOptions()
+
     staticopts.OnPrepareResponse <-
         new Action<StaticFileResponseContext>(fun ctx ->
         ctx.Context.Response.Headers.Append
             ("X-Content-Type-Options", Microsoft.Extensions.Primitives.StringValues("nosniff")))
+
     app.UseStaticFiles(staticopts) |> ignore
     app.UseRouting() |> ignore
     app.UseAuthentication() |> ignore
     app.UseAuthorization() |> ignore
+
     app.UseEndpoints(fun ep ->
         ep.MapHub<StatsHub>("/stats") |> ignore
         ep.MapHub<RoomsHub>("/rooms") |> ignore)
     |> ignore
+
     app.Use
         (new Func<HttpContext, Func<Task>, Task>(fun context next ->
-        task {
-            context.Response.Headers.Add
-                ("X-Content-Type-Options", Microsoft.Extensions.Primitives.StringValues("nosniff"))
-            do! next.Invoke()
-        } :> Task))
+        context.Response.Headers.Add("X-Content-Type-Options", Microsoft.Extensions.Primitives.StringValues("nosniff"))
+        next.Invoke()))
     |> ignore
+
     app.UseGiraffe(webApp)
 
 
@@ -101,7 +104,9 @@ type SystemTextJsonSerializer(options: JsonSerializerOptions) =
             JsonSerializer.Deserialize<'T>(ReadOnlySpan bytes, options)
 
         member _.DeserializeAsync<'T>(stream) =
-            JsonSerializer.DeserializeAsync<'T>(stream, options).AsTask()
+            JsonSerializer
+                .DeserializeAsync<'T>(stream, options)
+                .AsTask()
 
         member _.SerializeToBytes<'T>(value: 'T) =
             JsonSerializer.SerializeToUtf8Bytes<'T>(value, options)
@@ -129,8 +134,9 @@ let configureServices (services: IServiceCollection) =
     services.AddRazorEngine viewsFolderPath |> ignore
     services.AddCors() |> ignore
 
-    services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-            .AddCookie(fun o -> o.LoginPath <- PathString("/"))
+    services
+        .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+        .AddCookie(fun o -> o.LoginPath <- PathString("/"))
     |> ignore
 
     services.AddSignalR() |> ignore
@@ -141,10 +147,16 @@ let main args =
     let contentRoot = Directory.GetCurrentDirectory()
     let webRoot = Path.Combine(contentRoot, "WebRoot")
 
-    Host.CreateDefaultBuilder(args)
+    Host
+        .CreateDefaultBuilder(args)
         .ConfigureWebHostDefaults(fun webHostBuilder ->
-        webHostBuilder.UseContentRoot(contentRoot).UseWebRoot(webRoot)
-                      .Configure(Action<IApplicationBuilder> configureApp).ConfigureServices(configureServices)
-        |> ignore).Build().Run()
+            webHostBuilder
+                .UseContentRoot(contentRoot)
+                .UseWebRoot(webRoot)
+                .Configure(Action<IApplicationBuilder> configureApp)
+                .ConfigureServices(configureServices)
+            |> ignore)
+        .Build()
+        .Run()
 
     0

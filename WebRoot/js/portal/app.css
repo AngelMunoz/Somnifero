@@ -1,0 +1,37 @@
+
+.chathub {
+    display: grid;
+    gap: 0.5em;
+    grid-template:
+        '. nav nav' 5vh
+        'rooms chat chat' 50vh
+        'messagebar messagebar messagebar' 15vh / 1fr 1fr 1fr;
+}
+
+.room-list {
+    grid-area: rooms;
+}
+
+.room-nav {
+    grid-area: nav;
+}
+.room-chat {
+    grid-area: chat;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.room-message-bar {
+    grid-area: messagebar;
+}
+
+
+@media all and (max-width: 525px) {
+    .chathub {
+        grid-template: 
+            'nav' auto
+            'chat' 50vh
+            'messagebar' auto
+            'rooms' auto/ 1fr;
+    }
+}

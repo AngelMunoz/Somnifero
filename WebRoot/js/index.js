@@ -113,6 +113,6 @@ enhance({
  */
 function getCSRFTokenFromForm(form) {
   const tokenInput = form.querySelector('input[name=__RequestVerificationToken]');
-  const token = tokenInput?.value;
+  const token = (tokenInput || {}).value;
   return token;
 }

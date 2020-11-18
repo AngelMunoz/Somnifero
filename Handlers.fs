@@ -65,6 +65,7 @@ module Auth =
                        new Claim("FirstName", user.name)
                        new Claim("LastName", user.lastName)
                        new Claim("Invite", user.invite)
+                       new Claim("_id", user._id.ToString())
                        new Claim(ClaimTypes.Email, user.email) ],
                      CookieAuthenticationDefaults.AuthenticationScheme)
 
@@ -95,7 +96,8 @@ module Auth =
                                 if BCrypt.EnhancedVerify(loginpayload.password, user.password) then
                                     do! signin
                                             ctx
-                                            { email = user.email
+                                            { _id = user._id
+                                              email = user.email
                                               name = user.name
                                               lastName = user.lastName
                                               invite = user.invite }
@@ -141,12 +143,15 @@ module Auth =
 
                                 match didCreate with
                                 | Ok _ ->
-                                    do! signin
-                                            ctx
-                                            { email = signuppayload.email
-                                              name = signuppayload.name
-                                              lastName = signuppayload.lastName
-                                              invite = signuppayload.invite }
+                                    let! user = Users.TryFindUserByEmail signuppayload.email false
+
+                                    match user with
+                                    | Some user ->
+                                        match user with
+                                        | Users.User user -> do! signin ctx user
+                                        | _ -> ()
+                                    | None -> ()
+
                                     return! json { User = signuppayload.email } next ctx
                                 | Error ex ->
                                     printfn $"Falied to create user {ex.Message} - {ex}"
