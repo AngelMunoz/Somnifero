@@ -24,7 +24,7 @@ open Somnifero.ViewModels
 
 
 module Public =
-    let inline (+>) a b = a, box b
+    let inline (+>) (a: string) (b: 'T): string * obj = a, box b
 
     let Index =
 
