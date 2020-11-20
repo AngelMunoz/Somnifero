@@ -1,0 +1,9 @@
+{
+    "files.exclude": {
+        "**/.ionide": true,
+        "**/.vs": true,
+        "**/*.user": true,
+        "**/bin": true,
+        "**/obj": true
+    }
+}

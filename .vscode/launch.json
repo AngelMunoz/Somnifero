@@ -32,7 +32,9 @@
                 "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
             },
             "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development"
+                "MONGO_URL": "mongodb://localhost:27017",
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNET_URLS": "http://0.0.0.0:5000"
             },
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/Views"

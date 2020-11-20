@@ -5,6 +5,7 @@
     <AssemblyName>Somnifero.App</AssemblyName>
     <EnableDefaultContentItems>false</EnableDefaultContentItems>
     <OutputType>Exe</OutputType>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

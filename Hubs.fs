@@ -27,7 +27,8 @@ type VideoChatHub() =
 
     member this.OnBroadcaster() =
         task {
-            DontDoThis.broadcaster <- lazy (Some this.Context.ConnectionId)
+            let connectionid = this.Context.ConnectionId
+            DontDoThis.broadcaster <- lazy (Some connectionid)
             do! this.Clients.Others.SendAsync("OnBroadcaster")
         }
 
@@ -100,7 +101,7 @@ type RoomsHub() =
             let! result = Rooms.GetPublicRooms 1 10
 
             do! (this :> Hub)
-                .Clients.All.SendAsync("UpdatePublicRoomList", result)
+                    .Clients.All.SendAsync("UpdatePublicRoomList", result)
         }
 
     member this.AddRoom(name: string, isPublic: bool, topics: seq<string>): Task<unit> =
@@ -131,18 +132,18 @@ type RoomsHub() =
     member this.JoinRoom(group: string) =
         task {
             do! (this :> Hub)
-                .Groups.AddToGroupAsync(this.Context.ConnectionId, group)
+                    .Groups.AddToGroupAsync(this.Context.ConnectionId, group)
         }
 
     member this.LeaveRoom(group: string) =
         task {
             do! (this :> Hub)
-                .Groups.RemoveFromGroupAsync(this.Context.ConnectionId, group)
+                    .Groups.RemoveFromGroupAsync(this.Context.ConnectionId, group)
         }
 
     member this.SendMessageToGroup (group: string) (message: string) =
         task {
             do! (this :> Hub)
-                .Clients.Group(group)
-                .SendAsync("SendMessage", group, message)
+                    .Clients.Group(group)
+                    .SendAsync("SendMessage", group, message)
         }
